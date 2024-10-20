@@ -13,20 +13,24 @@ import random
 import string
 import requests
 import os
+from Bio import Blast, Entrez, SeqIO
 
 app = Flask(__name__)
-app.secret_key = os.getenv('SECRET_KEY', 'SECRET_KEY') 
+#secret key for session management
+app.secret_key = os.getenv('MIRNAPROTPRED_SECRET_KEY')
 
+#Entrez EmailSetup
+Entrez.email = os.getenv('MIRNAPROTPRED_EMAIL_USER')
 # PostgreSQL setup
-username = os.getenv('DB_USERNAME', 'DB_USERNAME')
-password = os.getenv('DB_PASSWORD', 'DB_PASSWORD')
-host = os.getenv('DB_HOST', 'DB_HOST')
-port = os.getenv('DB_PORT', 'DB_PORT')
-dbname = os.getenv('DB_NAME', 'DB_NAME')
+username = os.getenv('MIRNAPROTPRED_DB_USERNAME')
+password = os.getenv('MIRNAPROTPRED_DB_PASSWORD')
+host = os.getenv('MIRNAPROTPRED_DB_HOST')
+port = os.getenv('MIRNAPROTPRED_DB_PORT')
+dbname = os.getenv('MIRNAPROTPRED_DB_NAME')
 
-# Email deails
-email_user = os.getenv('EMAIL_USER', 'EMAIL_USER')
-email_pass = os.getenv('EMAIL_PASS', 'EMAIL_PASS')
+# Email details
+email_user = os.getenv('MIRNAPROTPRED_EMAIL_USER')
+email_pass = os.getenv('MIRNAPROTPRED_EMAIL_PASS')
 
 # SQLAlchemy setup
 encoded_password = urllib.parse.quote(password)
@@ -103,12 +107,15 @@ def transcription_translation(sequence):
         input_format = "DNA"
     elif all(nucleotide in "AUGC" for nucleotide in sequence):
         input_format = "RNA"
-    else:
+    elif all(amino_acid in "ARDNCEQGHILKMFPSTWYV-" for amino_acid in sequence):
         input_format = "Protein"
+    else:
+        raise ValueError("Invalid Input Sequecnce")
 
     if input_format == "Protein":
-        rna_sequence = protein_to_rna(sequence)
-        dna_sequence = rna_to_dna(rna_sequence)
+        ncbi_gi, ncbi_id, start_pos, end_pos = blast(sequence)
+        print(f'NCBI GI: {ncbi_gi}')
+        dna_sequence = retrieve_seq(ncbi_id, start_pos, end_pos)
     elif input_format == "RNA":
         dna_sequence = rna_to_dna(sequence)
     elif input_format == "DNA":
@@ -117,6 +124,29 @@ def transcription_translation(sequence):
         raise ValueError("Invalid input format")
 
     return dna_sequence
+
+
+def blast(sequence):
+    print('Starting Blast')
+    response = Blast.qblast(program='tblastn',
+                            database='core_nt',
+                            sequence=sequence,
+                            format_type='XML')
+    blast_record = Blast.read(response)
+    ##getting the alignment of the top sequence
+    alignment = blast_record[0][0].target.features[0].qualifiers.get('coded_by').split('|')
+    ncbi_gi, ncbi_id, positions = alignment[1], alignment[3], alignment[4]
+    start_pos, end_pos = positions.split(':')[1].split('..')
+    if int(start_pos) > int(end_pos):
+        start_pos, end_pos = end_pos, start_pos
+    return ncbi_gi, ncbi_id, start_pos, end_pos
+
+def retrieve_seq(ncbi_id, start_pos, end_pos):
+    print(f'Retrieving Sequence with NCBI ID: {ncbi_id}')
+    handle = Entrez.efetch(db='nucleotide', id=ncbi_id, rettype='fasta', retmode='text')
+    record = SeqIO.read(handle, 'fasta')
+    seq_of_interest = record.seq[int(start_pos)-1:int(end_pos)-1]
+    return seq_of_interest
 
 def protein_to_rna(protein_sequence):
     rna_sequence = "".join(genetic_code.get(aa, "") for aa in protein_sequence)
@@ -136,7 +166,7 @@ def search_miRNA_id_in_db(miRNA_id):
     return result
 
 def get_geolocation(ip_address):
-    token = os.getenv('GEOLOCATION_API_TOKEN', 'GEOLOCATION_API_TOKEN')
+    token = os.getenv('GEOLOCATION_API_TOKEN', '39102577b08cef')
     url = f'https://ipinfo.io/{ip_address}/json?token={token}'
     response = requests.get(url)
     data = response.json()
