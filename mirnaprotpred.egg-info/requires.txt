@@ -1,0 +1,6 @@
+pandas>=2.3.3
+openpyxl>=3.1.5
+biopython>=1.86
+pyfiglet>=1.0.4
+requests>=2.32.5
+viennarna>=2.7.1

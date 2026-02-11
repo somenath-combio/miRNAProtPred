@@ -1,0 +1,156 @@
+Metadata-Version: 2.4
+Name: mirnaprotpred
+Version: 0.1.6
+Summary: A package for miRNA protein prediction with SeqFinder and validator modules
+Home-page: https://github.com/somenath-combio/mirnaprotpred
+Author: Sudipta Sardar
+Author-email: Sudipta Sardar <sudipta@pusan.ac.kr>
+License: MIT
+Project-URL: Homepage, https://github.com/somenath-combio/mirnaprotpred
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.13
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: pandas>=2.3.3
+Requires-Dist: openpyxl>=3.1.5
+Requires-Dist: biopython>=1.86
+Requires-Dist: pyfiglet>=1.0.4
+Requires-Dist: requests>=2.32.5
+Requires-Dist: viennarna>=2.7.1
+Dynamic: author
+Dynamic: home-page
+Dynamic: license-file
+Dynamic: requires-python
+
+# miRNAProtPred
+
+A Python package for miRNA protein prediction with SeqFinder and validator modules.
+
+## Overview
+
+miRNAProtPred is a bioinformatics tool designed to identify miRNA target sequences in DNA, RNA, or protein sequences. It uses the Boyer-Moore string matching algorithm combined with BLAST and ViennaRNA for comprehensive miRNA target prediction and validation.
+
+## Features
+
+- **SeqFinder**: Find miRNA target sequences in DNA, RNA, or protein sequences
+  - Automatic sequence type detection (DNA/RNA/Protein)
+  - BLAST integration for protein sequence analysis
+  - Boyer-Moore pattern matching for efficient sequence searching
+  - ViennaRNA integration for minimum free energy (MFE) calculation
+  - Probability scoring (High/Medium/Low) based on MFE values
+  - Results export to CSV format
+
+- **Validator**: Validate miRNA-mRNA interactions (experimental module)
+
+## Installation
+
+### Prerequisites
+
+- Python >= 3.7
+- Required Python packages:
+  - pandas >= 1.3.0
+  - openpyxl >= 3.0.0
+  - biopython
+  - ViennaRNA
+  - pyfiglet
+
+### Install from source
+
+```bash
+git clone https://github.com/somenath-combio/mirnaprotpred.git
+cd mirnaprotpred
+pip install -e .
+```
+
+## Usage
+
+### SeqFinder
+
+Find miRNA target sequences in your input sequence:
+
+```bash
+SeqFinder <sequence>
+```
+
+**Examples:**
+
+```bash
+# DNA sequence
+SeqFinder "ATGCATGCATGCATGC"
+
+# RNA sequence
+SeqFinder "AUGCAUGCAUGCAUGC"
+
+# Protein sequence
+SeqFinder "MKKLAVSLLLFLSSLA"
+```
+
+The tool will:
+1. Automatically detect the sequence type
+2. Search for miRNA seed sequences from the database
+3. Calculate minimum free energy (MFE) using ViennaRNA
+4. Assign probability scores (High: MFE ≤ -15, Medium: -15 < MFE ≤ -10, Low: MFE > -10)
+5. Display results sorted by MFE
+6. Optionally save results to CSV
+
+### Validator
+
+Validate miRNA-mRNA interactions:
+
+```bash
+validator <miRNA_sequence> <mRNA_sequence>
+```
+
+**Example:**
+
+```bash
+validator "AUGCAUGC" "GCAUGCAU"
+```
+
+## Data Requirements
+
+The SeqFinder module requires a data file located at `data/data.xlsx` containing:
+- miRNA descriptions
+- Human miRNA IDs
+- Accession numbers
+- Sequences
+- Seed sequences (seed1, seed2, seed3 columns)
+
+## Output
+
+SeqFinder generates results with the following columns:
+- **Description**: miRNA description
+- **Human miRNA ID**: Identifier for the miRNA
+- **Accession**: Accession number
+- **Sequence**: Full miRNA sequence
+- **Seed**: Matched seed sequence
+- **Position**: Position of the match in the input sequence
+- **CTS**: Complementary target site sequence
+- **MFE**: Minimum free energy
+- **Prob**: Probability score (High/Medium/Low)
+
+## How It Works
+
+1. **Sequence Type Detection**: Automatically identifies whether the input is DNA, RNA, or protein
+2. **Protein Processing**: For protein sequences, uses BLAST to retrieve the corresponding nucleotide sequence
+3. **Pattern Matching**: Uses the Boyer-Moore algorithm to find miRNA seed sequences
+4. **Energy Calculation**: Calculates duplex formation energy using ViennaRNA
+5. **Scoring**: Assigns probability based on MFE thresholds
+
+## License
+
+MIT License
+
+## Author
+
+Sudipta Sardar (sudipta@pusan.ac.kr)
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## Citation
+
+If you use this tool in your research, please cite appropriately.

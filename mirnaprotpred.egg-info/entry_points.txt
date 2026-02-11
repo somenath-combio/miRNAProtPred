@@ -1,0 +1,3 @@
+[console_scripts]
+SeqFinder = mirnaprotpred.SeqFinder.seqfinder:cli
+validator = mirnaprotpred.validator.validator:cli
