@@ -29,7 +29,7 @@ miRNAProtPred is a bioinformatics tool designed to identify miRNA target sequenc
 
 ### Prerequisites
 
-- Python >= 3.7
+- Python >= 3.13
 - Required Python packages:
   - pandas >= 1.3.0
   - openpyxl >= 3.0.0
